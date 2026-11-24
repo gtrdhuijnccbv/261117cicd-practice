@@ -1,28 +1,44 @@
 name: Deploy GitHub Pages
 on:
   push:
-    branches: [ main ]
+    branches: ["main"]
+
+# 全局权限
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: "pages"
   cancel-in-progress: false
+
 jobs:
+  # 第一步：检出代码、打包、上传制品
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
-      - name: Setup Pages
+
+      - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload artifact
+
+      - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+
+  # 第二步：部署，依赖build任务完成
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
